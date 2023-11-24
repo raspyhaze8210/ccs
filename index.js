@@ -34,8 +34,8 @@ app.post('/api/prospect/create',(req, res) => {
     let insertProspect = `
         INSERT INTO "Prospect" ("Loan_Amount", "Purpose", "Credit_Score", "Email", "Date_Of_Birth", "First_Name", "Last_Name",
                                 "Address1", "Address2", "Zip", "City", "Phone_Number", "State", "Home_Ownership_Status",
-                                "Education_Level", "Employment_Status", "Annual_Income", "Payment_Frequency", "Social_Security_Number", "Brand_Name", "Form_Id") 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING "ProspectId"
+                                "Education_Level", "Employment_Status", "Annual_Income", "Payment_Frequency", "Social_Security_Number", "Brand_Name", "Form_Id", "push_source") 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, Apply Form Demo) RETURNING "ProspectId"
     `;
 
     let Form_Id = generateUUID();
