@@ -131,15 +131,14 @@ function registerCallback(endPoint) {
     });
 }
 
-sendDataToSalesforce('/createLead');
-sendDataToSalesforce('/getPreApprovedByOfferCode');
-sendDataToSalesforce('/getEmailCode');
-sendDataToSalesforce('/scheduleCall');
-sendDataToSalesforce('/sendEmailLeadCreated');
-sendDataToSalesforce('/saveSelectedOfferToLead');
-sendDataToSalesforce('/prospectIdFromEmail');
-sendDataToSalesforce('/offersLinkByApplicationUuid');
-sendDataToSalesforce('/checkLeadRenovaPreApproved');
+registerCallback('/createLead');
+registerCallback('/getPreApprovedByOfferCode');
+registerCallback('/verifyProspect');
+registerCallback('/saveSelectedOfferToLead');
+registerCallback('/prospectIdFromEmail');
+registerCallback('/offersLinkByApplicationUuid');
+registerCallback('/checkLeadRenovaPreApproved');
+
 function generateUUID() {
     let d = new Date().getTime();
     let d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now() * 1000)) || 0;
@@ -156,35 +155,21 @@ function generateUUID() {
     });
 }
 
-app.post('/api/import',(req, res) => {
-    console.log('Import ', req.body);
-    console.log(req.body.rows);
-    console.log(req.body.rows[0].FIRST);
-    console.log(req.body.rows[0].ADDRESS);
-    let insertProspect = `
-        INSERT INTO "Prospect" ("First_Name", "Zip", "Expiration", "Mail_Date", "Credit_Score", "Last_Name", "Offer_Code",
-                                "Adjusted_Credit_Card_Balance", "Address1", "Mailler_Version", "Middle_Name", "State",
-                                "PreApproved_Loan_Amount", "Brand_Name", "City", "Form_Id")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING "ProspectId"
+function createErrorLog(errorMessage, userData) {
+    let insertErrorLog = `
+        INSERT INTO "Heroku_Error_Logs" ("Error_Message", "User_Data")
+        VALUES ($1, $2) RETURNING "Id"
     `;
-    req.body.rows.forEach(prospect => {
-        let Form_Id = generateUUID();
-        client.query(insertProspect, [
-            prospect.FIRST, prospect.ZIP, prospect['EXP DATE'], prospect['MAIL DATE'], prospect['CREDIT SCORE'], prospect.LAST,
-            prospect['RECORD NUMBER'], prospect['CREDIT CARD BALANCE (ADJ)'], prospect.ADDRESS, prospect['MAILER VERSION'],
-            prospect.MIDDLE, prospect.ST, prospect['DEBT CONSOLIDATION'], prospect.COMPANY, prospect.CITY, Form_Id
-        ], (err, result) => {
-            if (err) {
-                res.send(res.status(200).json({}));
-            }
-            else {
-                res.send(res.status(200).json({}));
-            }
-        });
-        console.log(prospect);
-    })
-    return res.status(200).json({});
-});
+
+    client.query(insertErrorLog, [
+        errorMessage, userData
+    ], (err, result) => {
+        if (err) {
+            throw err
+        }
+    });
+}
+
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}`)
 });
