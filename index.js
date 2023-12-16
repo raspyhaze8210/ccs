@@ -131,13 +131,16 @@ function registerCallback(endPoint) {
     });
 }
 
-registerCallback('/createLead');
-registerCallback('/getPreApprovedByOfferCode');
-registerCallback('/verifyProspect');
-registerCallback('/saveSelectedOfferToLead');
-registerCallback('/prospectIdFromEmail');
-registerCallback('/offersLinkByApplicationUuid');
-registerCallback('/checkLeadRenovaPreApproved');
+sendDataToSalesforce('/createLead');
+sendDataToSalesforce('/getPreApprovedByOfferCode');
+sendDataToSalesforce('/getEmailCode');
+sendDataToSalesforce('/scheduleCall');
+sendDataToSalesforce('/sendEmailLeadCreated');
+sendDataToSalesforce('/saveSelectedOfferToLead');
+sendDataToSalesforce('/prospectIdFromEmail');
+sendDataToSalesforce('/offersLinkByApplicationUuid');
+sendDataToSalesforce('/checkLeadRenovaPreApproved');
+
 
 function generateUUID() {
     let d = new Date().getTime();
