@@ -1,16 +1,16 @@
 const jsforce = require('jsforce');
 const express = require('express')
-require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 const path = require('path');
 const router = express.Router();
 const bodyParser = require('body-parser');
+
 const SF_LOGIN_URL = process.env.SF_LOGIN_URL;
 const SF_USERNAME = process.env.SF_USERNAME;
 const SF_PASSWORD = process.env.SF_PASSWORD;
 const SF_TOKEN = process.env.SF_TOKEN;
-let accessToken;
+
 const { Pool } = require('pg');
 const {XMLHttpRequest} = require("xmlhttprequest");
 const client = new Pool({
@@ -19,13 +19,16 @@ const client = new Pool({
         rejectUnauthorized: false
     }
 });
+
+let accessToken;
+
+require('dotenv').config();
+
 app.use("/getfundingnow",router);
 app.use("/",router);
 client.connect();
 app.use('/getfundingnow', express.static(path.join(__dirname, 'static', 'dist')));
 app.use('/', express.static(path.join(__dirname, 'static', 'dist')));
-// app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(bodyParser.json());
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb'}));
 
@@ -34,9 +37,8 @@ app.post('/api/prospect/create',(req, res) => {
     let insertProspect = `
         INSERT INTO "Prospect" ("Loan_Amount", "Purpose", "Credit_Score", "Email", "Date_Of_Birth", "First_Name", "Last_Name",
                                 "Address1", "Address2", "Zip", "City", "Phone_Number", "State", "Home_Ownership_Status",
-                                "Education_Level", "Employment_Status", "Annual_Income", "Payment_Frequency", "Social_Security_Number", "Brand_Name", "Form_Id", "push_source") 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'Apply Form Demo') RETURNING "ProspectId"
-    `;
+                                "Education_Level", "Employment_Status", "Annual_Income", "Payment_Frequency", "Social_Security_Number", "Brand_Name", "Form_Id", "push_source")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'Apply Form') RETURNING "ProspectId"`;
 
     let Form_Id = generateUUID();
     client.query(insertProspect, [
@@ -45,8 +47,10 @@ app.post('/api/prospect/create',(req, res) => {
         req.body.State, req.body.Home_Ownership_Status, req.body.Education_Level, req.body.Employment_Status,
         req.body.Annual_Income, req.body.Payment_Frequency, req.body.Social_Security_Number, req.body.Company, Form_Id
     ], (err, result) => {
-        if (err) throw err
-        else {
+        if (err) {
+            createErrorLog(err.message, JSON.stringify(req.body));
+            throw err
+        } else {
             res.send('{"ProspectId":' + result.rows[0].ProspectId + '}');
         }
     });
@@ -72,17 +76,18 @@ app.post('/api/prospect/update',(req, res) => {
         req.body.Annual_Income, req.body.Payment_Frequency, req.body.Social_Security_Number, req.body.ProspectId
     ], (err, result) => {
         if (err) {
+            createErrorLog(err.message, JSON.stringify(req.body));
             console.error(err);
         }
     });
 });
 
-function sendDataToSalesforce(endPoint) {
+function registerCallback(endPoint) {
     app.post(endPoint, function(req, res) {
         let promise = new Promise((resolve, reject) => {
             const conn = new jsforce.Connection({
                 loginUrl: SF_LOGIN_URL
-            })
+            });
             conn.login(SF_USERNAME, SF_PASSWORD + SF_TOKEN, (err, userInfo) => {
                 if (err) {
                     console.log(err);
@@ -93,53 +98,56 @@ function sendDataToSalesforce(endPoint) {
                 accessToken = conn.accessToken;
                 resolve();
             })
-            .then(r  => {
-                console.log(r);
-            })
-            .catch(e => {
-                console.error(e);
-            });
+                .then(r  => {
+                    console.log(r);
+                })
+                .catch(e => {
+                    createErrorLog(e.message, JSON.stringify(req.body));
+                    console.error(e);
+                });
         });
-        promise.then(() => {
-            let XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-            let xhr = new XMLHttpRequest();
-            xhr.open('POST', 'https://centuryconsultingservices2020.my.salesforce.com/services/apexrest' + endPoint, true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4) {
-                    console.log(xhr.status);
-                    console.log('###responseText###', JSON.parse(xhr.responseText));
-                    res.send(JSON.parse(xhr.responseText));
-                }
-            };
-            xhr.setRequestHeader("Accept", "application/json");
-            xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
-            xhr.setRequestHeader("Content-Type", "application/json");
+        promise
+            .then(() => {
+                let XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+                let xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://centuryconsultingservices2020.my.salesforce.com/services/apexrest' + endPoint, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+                        console.log(xhr.status);
+                        console.log('###responseText###', JSON.parse(xhr.responseText));
+                        res.send(JSON.parse(xhr.responseText));
+                    }
+                };
+                xhr.setRequestHeader("Accept", "application/json");
+                xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
+                xhr.setRequestHeader("Content-Type", "application/json");
 
-            xhr.send(JSON.stringify(req.body));
-            console.log('response ', xhr.responseText);
-        });
+                xhr.send(JSON.stringify(req.body));
+                console.log('response ', xhr.responseText);
+            })
+            .catch(error => {
+                createErrorLog(error.message, JSON.stringify(req.body));
+            });
     });
 }
 
-sendDataToSalesforce('/createLead');
-sendDataToSalesforce('/getPreApprovedByOfferCode');
-sendDataToSalesforce('/getEmailCode');
-sendDataToSalesforce('/scheduleCall');
-sendDataToSalesforce('/sendEmailLeadCreated');
-sendDataToSalesforce('/saveSelectedOfferToLead');
-sendDataToSalesforce('/prospectIdFromEmail');
-sendDataToSalesforce('/offersLinkByApplicationUuid');
-sendDataToSalesforce('/checkLeadRenovaPreApproved');
+registerCallback('/createLead');
+registerCallback('/getPreApprovedByOfferCode');
+registerCallback('/verifyProspect');
+registerCallback('/saveSelectedOfferToLead');
+registerCallback('/prospectIdFromEmail');
+registerCallback('/offersLinkByApplicationUuid');
+registerCallback('/checkLeadRenovaPreApproved');
 
-function generateUUID() { // Public Domain/MIT
-    let d = new Date().getTime();//Timestamp
-    let d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now() * 1000)) || 0;//Time in microseconds since page-load or 0 if unsupported
+function generateUUID() {
+    let d = new Date().getTime();
+    let d2 = ((typeof performance !== 'undefined') && performance.now && (performance.now() * 1000)) || 0;
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        let r = Math.random() * 16;//random number between 0 and 16
-        if(d > 0){//Use timestamp until depleted
+        let r = Math.random() * 16;
+        if(d > 0) {
             r = (d + r) % 16 | 0;
             d = Math.floor(d / 16);
-        } else {//Use microseconds since page-load if supported
+        } else {
             r = (d2 + r) % 16 | 0;
             d2 = Math.floor(d2 / 16);
         }
@@ -147,37 +155,21 @@ function generateUUID() { // Public Domain/MIT
     });
 }
 
-app.post('/api/import',(req, res) => {
-    console.log('Import ', req.body);
-    console.log(req.body.rows);
-    console.log(req.body.rows[0].FIRST);
-    console.log(req.body.rows[0].ADDRESS);
-    let insertProspect = `
-        INSERT INTO "Prospect" ("First_Name", "Zip", "Expiration", "Mail_Date", "Credit_Score", "Last_Name", "Offer_Code",
-                                "Adjusted_Credit_Card_Balance", "Address1", "Mailler_Version", "Middle_Name", "State",
-                                "PreApproved_Loan_Amount", "Brand_Name", "City", "Form_Id")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING "ProspectId"
+function createErrorLog(errorMessage, userData) {
+    let insertErrorLog = `
+        INSERT INTO "Heroku_Error_Logs" ("Error_Message", "User_Data")
+        VALUES ($1, $2) RETURNING "Id"
     `;
-    req.body.rows.forEach(prospect => {
-        let Form_Id = generateUUID();
-        client.query(insertProspect, [
-            prospect.FIRST, prospect.ZIP, prospect['EXP DATE'], prospect['MAIL DATE'], prospect['CREDIT SCORE'], prospect.LAST,
-            prospect['RECORD NUMBER'], prospect['CREDIT CARD BALANCE (ADJ)'], prospect.ADDRESS, prospect['MAILER VERSION'],
-            prospect.MIDDLE, prospect.ST, prospect['DEBT CONSOLIDATION'], prospect.COMPANY, prospect.CITY, Form_Id
-        ], (err, result) => {
-            if (err) {
-                res.send(res.status(200).json({}));
-            }
-            else {
-                res.send(res.status(200).json({}));
-            }
-        });
-        console.log(prospect);
-    })
-    return res.status(200).json({});
-});
+
+    client.query(insertErrorLog, [
+        errorMessage, userData
+    ], (err, result) => {
+        if (err) {
+            throw err
+        }
+    });
+}
 
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}`)
 });
-
