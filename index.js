@@ -112,7 +112,7 @@ function registerCallback(endPoint) {
             .then(() => {
                 let XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
                 let xhr = new XMLHttpRequest();
-                xhr.open('POST', 'https://centuryconsultingservices2020--partcop.sandbox.my.salesforce.com/services/apexrest' + endPoint, true);
+                xhr.open('POST', 'https://centuryconsultingservices2020--coresolute.sandbox.my.salesforce.com/services/apexrest' + endPoint, true);
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4) {
                         console.log(xhr.status);
