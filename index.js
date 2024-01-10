@@ -34,12 +34,6 @@ app.use(bodyParser.urlencoded({limit: '50mb'}));
 
 app.post('/api/prospect/create',(req, res) => {
     console.log('Got body ', req.body);
-    const inputDate = req.body.Date_Of_Birth;
-    const [month, day, year] = inputDate.split('/');
-    const dateOfBirth = new Date(Date.UTC(year, month - 1, day)); // Month is 0-indexed in JavaScript
-
-    // Format the date to YYYY-MM-DD
-    const formattedDate = dateOfBirth.toISOString().split('T')[0];
     let insertProspect = `
         INSERT INTO "Prospect" ("Loan_Amount", "Purpose", "Credit_Score", "Email", "Date_Of_Birth", "First_Name", "Last_Name",
                                 "Address1", "Address2", "Zip", "City", "Phone_Number", "State", "Home_Ownership_Status",
@@ -50,7 +44,7 @@ app.post('/api/prospect/create',(req, res) => {
 
     let Form_Id = generateUUID();
     client.query(insertProspect, [
-        req.body.Loan_Amount, req.body.Purpose, req.body.Credit_Score, req.body.Email, formattedDate,
+        req.body.Loan_Amount, req.body.Purpose, req.body.Credit_Score, req.body.Email, req.body.Date_Of_Birth,
         req.body.First_Name, req.body.Last_Name, req.body.Address1, req.body.Address2, req.body.Zip, req.body.City, req.body.Mobile_Phone,
         req.body.State, req.body.Home_Ownership_Status, req.body.Education_Level, req.body.Employment_Status,
         req.body.Annual_Income, req.body.Payment_Frequency, req.body.Social_Security_Number, req.body.Company, Form_Id
@@ -67,12 +61,6 @@ app.post('/api/prospect/create',(req, res) => {
 app.post('/api/prospect/update',(req, res) => {
     console.log('Got body ', req.body);
     res.send(req.body);
-    const inputDate = req.body.Date_Of_Birth;
-    const [month, day, year] = inputDate.split('/');
-    const dateOfBirth = new Date(Date.UTC(year, month - 1, day)); // Month is 0-indexed in JavaScript
-
-    // Format the date to YYYY-MM-DD
-    const formattedDate = dateOfBirth.toISOString().split('T')[0];
     let updateProspect = `
         UPDATE "Prospect" SET (
             "Loan_Amount", "Purpose", "Credit_Score", "Email", "Date_Of_Birth", "First_Name", "Last_Name",
@@ -84,7 +72,7 @@ app.post('/api/prospect/update',(req, res) => {
         WHERE "ProspectId" = $20
     `;
     client.query(updateProspect, [
-        req.body.Loan_Amount, req.body.Purpose, req.body.Credit_Score, req.body.Email, formattedDate,
+        req.body.Loan_Amount, req.body.Purpose, req.body.Credit_Score, req.body.Email, req.body.Date_Of_Birth,
         req.body.First_Name, req.body.Last_Name, req.body.Address1, req.body.Address2, req.body.Zip, req.body.City, req.body.Mobile_Phone,
         req.body.State, req.body.Home_Ownership_Status, req.body.Education_Level, req.body.Employment_Status,
         req.body.Annual_Income, req.body.Payment_Frequency, req.body.Social_Security_Number, req.body.ProspectId
