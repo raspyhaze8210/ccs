@@ -63,6 +63,8 @@ app.post('/api/prospect/create',(req, res) => {
 
 app.post('/api/prospect/update',(req, res) => {
     console.log('Got body ', req.body);
+    let dobParts = req.body.Date_Of_Birth.split('/');
+    let dobFormatted = `${dobParts[2]}-${dobParts[0].padStart(2, '0')}-${dobParts[1].padStart(2, '0')}`;
 
     res.send(req.body);
     let updateProspect = `
