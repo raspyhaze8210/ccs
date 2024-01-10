@@ -34,9 +34,17 @@ app.use(bodyParser.urlencoded({limit: '50mb'}));
 
 app.post('/api/prospect/create',(req, res) => {
     console.log('Got body ', req.body);
-    let dobParts = req.body.Date_Of_Birth.split('/');
-    let dobFormatted = `${dobParts[2]}-${dobParts[0].padStart(2, '0')}-${dobParts[1].padStart(2, '0')}`;
-
+    if (req.body.Date_Of_Birth && req.body.Date_Of_Birth.includes('/')) {
+        let dobParts = req.body.Date_Of_Birth.split('/');
+        if (dobParts.length === 3) {
+            let dobFormatted = `${dobParts[2]}-${dobParts[0].padStart(2, '0')}-${dobParts[1].padStart(2, '0')}`;
+            req.body.Date_Of_Birth = dobFormatted;
+        } else {
+            console.error('Date_Of_Birth format error:', req.body.Date_Of_Birth);
+            res.status(500).send('Date_Of_Birth format error');
+            return;
+        }
+    }
     let insertProspect = `
         INSERT INTO "Prospect" ("Loan_Amount", "Purpose", "Credit_Score", "Email", "Date_Of_Birth", "First_Name", "Last_Name",
                                 "Address1", "Address2", "Zip", "City", "Phone_Number", "State", "Home_Ownership_Status",
@@ -63,8 +71,17 @@ app.post('/api/prospect/create',(req, res) => {
 
 app.post('/api/prospect/update',(req, res) => {
     console.log('Got body ', req.body);
-    let dobParts = req.body.Date_Of_Birth.split('/');
-    let dobFormatted = `${dobParts[2]}-${dobParts[0].padStart(2, '0')}-${dobParts[1].padStart(2, '0')}`;
+    if (req.body.Date_Of_Birth && req.body.Date_Of_Birth.includes('/')) {
+        let dobParts = req.body.Date_Of_Birth.split('/');
+        if (dobParts.length === 3) {
+            let dobFormatted = `${dobParts[2]}-${dobParts[0].padStart(2, '0')}-${dobParts[1].padStart(2, '0')}`;
+            req.body.Date_Of_Birth = dobFormatted;
+        } else {
+            console.error('Date_Of_Birth format error:', req.body.Date_Of_Birth);
+            res.status(500).send('Date_Of_Birth format error');
+            return;
+        }
+    }
     res.send(req.body);
     let updateProspect = `
         UPDATE "Prospect" SET (
