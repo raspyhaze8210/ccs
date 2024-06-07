@@ -13586,8 +13586,8 @@
             t.searchParams.get("prospectId") && (this.fundingForm = !0),
               t.searchParams.get("appId") && (this.fundingForm = !0),
               ("http://localhost:5006" !== t.origin &&
-                "http://p0w8g00.13.233.112.203.sslip.io" !== t.origin &&
-                "http://p0w8g00.13.233.112.203.sslip.io/" !== t.origin) ||
+                "http://wgwcsow.13.233.112.203.sslip.io" !== t.origin &&
+                "http://wgwcsow.13.233.112.203.sslip.io/" !== t.origin) ||
                 (this.fundingForm = !0);
           },
           mounted() {
